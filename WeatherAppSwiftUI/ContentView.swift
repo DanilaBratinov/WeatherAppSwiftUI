@@ -4,23 +4,27 @@ struct ContentView: View {
     @State private var temp = 0
     @State private var humidity = 0
     @State private var windSpeed = 0
-    @State private var cityName = "MOSCOW"
+    @State private var cityName = ""
     @State private var cityOvercast = "пасмурно"
+    @State private var image = "cloud.sun"
     
     var body: some View {
         VStack {
             HStack {
                 Image(systemName: "mappin")
                     .imageScale(.large)
-//                    .frame(width: 35, height: 35)
                 
-                TextField(text: $cityName) {}
+                TextField("CITY", text: $cityName)
+                    .textCase(.uppercase)
                     .font(.title)
                     .fontWeight(.light)
+                    .onSubmit {
+                        fetchWeather(city: cityName.trimmingCharacters(in: .whitespacesAndNewlines))
+                    }
                 
                 Spacer()
                 
-                Button(action: {fetchWeather(city: cityName)}) {
+                Button(action: {fetchWeather(city: cityName.trimmingCharacters(in: .whitespacesAndNewlines))}) {
                     Circle()
                         .foregroundStyle(.cyan)
                         .frame(width: 50, height: 50)
@@ -34,7 +38,7 @@ struct ContentView: View {
             }
             
             VStack {
-                Image(systemName: "cloud.sun")
+                Image(systemName: image)
                     .resizable()
                     .frame(width: 270, height: 200)
                     .foregroundColor(.mint)
@@ -44,6 +48,7 @@ struct ContentView: View {
                 
                 Text(cityOvercast)
                     .fontWeight(.light)
+                    .textCase(.uppercase)
             }
             .padding(.top, 75)
             
@@ -99,6 +104,7 @@ extension ContentView {
         
         return url
     }
+    
     private func fetchWeather(city: String) {
         NetworkManager.shared.fetch(Weather.self, from: getURL(city: city)) { result in
             switch result {
@@ -107,8 +113,10 @@ extension ContentView {
                 cityOvercast = data.weather?.first?.description ?? ""
                 humidity = data.main?.humidity ?? 0
                 windSpeed = Int(data.wind?.speed ?? 0)
-            case .failure(let error):
-                print(error)
+                image = "cloud.sun"
+            case .failure(_):
+                cityOvercast = "Ошибка"
+                image = "externaldrive.badge.exclamationmark"
             }
         }
     }
